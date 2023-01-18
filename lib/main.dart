@@ -2,12 +2,19 @@ import 'package:flutter/material.dart';
 
 void main() {
   //starting point of the application.
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 // how to create an app.
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MyApp extends StatefulWidget {
+  MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  String buttonName = 'click here';
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +25,14 @@ class MyApp extends StatelessWidget {
           title: const Text('App Tittle'),
         ),
         body: Center(
-          child: ElevatedButton(onPressed: (() {}), child: Text('click here')),
+          child: ElevatedButton(
+            onPressed: (() {
+              setState(() {
+                buttonName = 'button clicked';
+              });
+            }),
+            child: Text('buttonName'),
+          ),
         ),
         bottomNavigationBar: BottomNavigationBar(
           items: const [
@@ -37,19 +51,19 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class MyWidget extends StatefulWidget {
-  const MyWidget({super.key});
+// class MyWidget extends StatefulWidget {
+//   const MyWidget({super.key});
 
-  @override
-  State<MyWidget> createState() => _MyWidgetState();
-}
+//   @override
+//   State<MyWidget> createState() => _MyWidgetState();
+// }
 
-class _MyWidgetState extends State<MyWidget> {
-  @override
-  Widget build(BuildContext context) {
-    return Container();
-  }
-}
+// class _MyWidgetState extends State<MyWidget> {
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container();
+//   }
+// }
  
  //flow (statelesswidget -> build something -> return something)
  // flutter is widget inside widget inside widget....
