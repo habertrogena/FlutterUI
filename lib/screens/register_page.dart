@@ -1,4 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_testing/screens/login_page.dart';
+import 'package:flutter_application_testing/services/firebase_auth_service.dart';
+import 'firebase_controllers.dart';
 
 class RegistrationPage extends StatefulWidget {
   const RegistrationPage({super.key});
@@ -12,11 +16,11 @@ class _RegistrationPageState extends State<RegistrationPage> {
   //form key
   final _formkey = GlobalKey<FormState>();
   // define editing controller
-  final firstNameEditingController = new TextEditingController();
-  final secondNameEditingController = new TextEditingController();
-  final emailEditingController = new TextEditingController();
-  final passwordEditingController = new TextEditingController();
-  final confirmPasswordEditingController = new TextEditingController();
+  // final firstNameEditingController = TextEditingController();
+  // final secondNameEditingController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  // final confirmPasswordEditingController = TextEditingController();
   @override
   Widget build(BuildContext context) {
     //fields.
@@ -38,12 +42,27 @@ class _RegistrationPageState extends State<RegistrationPage> {
     //     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
     //   ),
     // );
+
+    //email validation
+    @override
+    void dispose() {
+      _emailController.dispose();
+
+      super.dispose();
+    }
+
     // second name
     final secondNameField = TextFormField(
       autofocus: false,
       controller: secondNameEditingController,
       keyboardType: TextInputType.name,
       //validator: (value) {},
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return "please enter full names";
+        }
+        return null;
+      },
       onSaved: (value) {
         secondNameEditingController.text = value!;
       },
@@ -58,12 +77,25 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
     // email field
     final emailField = TextFormField(
+      autofillHints: const [AutofillHints.email], //added this
       autofocus: false,
-      controller: firstNameEditingController,
+      controller: _emailController,
       keyboardType: TextInputType.emailAddress,
-      //validator: (value) {},
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return "please enter email";
+        }
+        if (!RegExp("^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+.[a-z]").hasMatch(value)) {
+          return " please enter a valid email";
+        }
+        return null;
+      },
+
       onSaved: (value) {
-        emailEditingController.text = value!;
+        setState(() {
+          _emailController.text = value!;
+        });
+        //emailEditingController.text = value!;
       },
       textInputAction: TextInputAction.next,
       decoration: InputDecoration(
@@ -78,12 +110,18 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
     final passwordField = TextFormField(
       autofocus: false,
-      controller: passwordEditingController,
+      controller: _passwordController,
       //keyboardType: TextInputType.visiblePassword,
       //validator: (value) {},
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return "please enter password";
+        }
+        return null;
+      },
       obscureText: true,
       onSaved: (value) {
-        passwordEditingController.text = value!;
+        _passwordController.text = value!;
       },
       textInputAction: TextInputAction.next,
       decoration: InputDecoration(
@@ -101,6 +139,15 @@ class _RegistrationPageState extends State<RegistrationPage> {
       controller: confirmPasswordEditingController,
       //keyboardType: TextInputType.visiblePassword,
       //validator: (value) {},
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return "please re enter your password";
+        }
+        if (confirmPasswordEditingController.text != _passwordController.text) {
+          return "passwords do not match";
+        }
+        return null;
+      },
       obscureText: true,
       onSaved: (value) {
         confirmPasswordEditingController.text = value!;
@@ -121,7 +168,48 @@ class _RegistrationPageState extends State<RegistrationPage> {
       child: MaterialButton(
         padding: EdgeInsets.fromLTRB(20, 15, 20, 15),
         minWidth: MediaQuery.of(context).size.width,
-        onPressed: () {},
+        //
+        onPressed: () async {
+          var email = _emailController.text.trim();
+          var password = _passwordController.text.trim();
+          var confirmPassword = confirmPasswordEditingController.text.trim();
+          print(confirmPassword);
+          print(email);
+          print(password);
+          //testing
+          try {
+            await FirebaseAuthService().signup(
+                _emailController.text.trim(), _passwordController.text.trim());
+
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const LoginPage(),
+                ));
+          } on FirebaseException catch (e) {
+            debugPrint("error is ${e.message}");
+
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text("Alert dialogue box"),
+                content: const Text(
+                    "Make sure you fill in all the required  detail ,Make sure Email is formatted correctly ie. me@gmail.com,Make sure the Password and confirm password match,If you already created an account login"),
+                actions: <Widget>[
+                  TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const LoginPage()),
+                        );
+                      },
+                      child: const Text("OK"))
+                ],
+              ),
+            );
+          }
+        },
         child: Text(
           "sign Up",
           textAlign: TextAlign.center,

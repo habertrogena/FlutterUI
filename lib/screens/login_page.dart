@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_testing/screens/home_page.dart';
+import 'package:flutter_application_testing/screens/mycustom_screen.dart';
 import 'package:flutter_application_testing/screens/register_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_application_testing/services/firebase_auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -9,14 +13,43 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  //initialize firebase auth
+  final FirebaseAuth_auth = FirebaseAuth.instance;
   //pass the parameters
 
   //form key - help in validation.
   final _formkey = GlobalKey<FormState>();
+  //
+  // String _email, _password;
+
+  // checkAuthentification() async {
+  //   _auth.onAuthStateChanged.listen((user) {
+  //     if (user != null) {
+  //       Navigator.push(
+  //         context,
+  //         MaterialPageRoute(
+  //           builder: ((context) => HomePage()),
+  //         ),
+  //       );
+  //       @override
+  //       void initState() {
+  //         super.initState();
+  //         this.checkAuthentification();
+  //       }
+  //     }
+  //   });
+  // }
 
   //editing controllers
-  final TextEditingController emailController = new TextEditingController();
-  final TextEditingController passwordController = new TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+//email validation
+  @override
+  void dispose() {
+    emailController.dispose();
+
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,10 +57,19 @@ class _LoginPageState extends State<LoginPage> {
 
     // email field
     final emailField = TextFormField(
+      autofillHints: const [
+        AutofillHints.email
+      ], //added this to bring the dialogue box
       autofocus: false,
       controller: emailController,
       keyboardType: TextInputType.emailAddress,
       //validator: (value) {},
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return "please enter your email";
+        }
+        return null;
+      },
       onSaved: (value) {
         emailController.text = value!;
       },
@@ -46,6 +88,12 @@ class _LoginPageState extends State<LoginPage> {
       obscureText: true,
       //keyboardType: TextInputType.,
       //validator: (value) {},
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return "please enter your password";
+        }
+        return null;
+      },
       onSaved: (value) {
         passwordController.text = value!;
       },
@@ -66,7 +114,68 @@ class _LoginPageState extends State<LoginPage> {
       child: MaterialButton(
         padding: EdgeInsets.fromLTRB(20, 15, 20, 15),
         minWidth: MediaQuery.of(context).size.width,
-        onPressed: () {},
+        onPressed: () async {
+          try {
+            await FirebaseAuthService().login(
+                emailController.text.trim(), passwordController.text.trim());
+            if (FirebaseAuth.instance.currentUser != null) {
+              if (!mounted) return;
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => myCustomScreen()),
+              );
+            } else {
+              //             // showDialog(
+              //             //   context: context,
+              //             //   builder: (context) => AlertDialog(
+              //             //     title: const Text('Alert Dialogue Box'),
+              //             //     content: const Text(
+              //             //         'Invalid username or password.Please enter the correct login details.or register'),
+              //             //     actions: <Widget>[
+              //             //       TextButton(
+              //             //           child: Text('Register Now'),
+              //             //           onPressed: () {
+              //             //             Navigator.push(
+              //             //               context,
+              //             //               MaterialPageRoute(
+              //             //                 builder: (context) => RegistrationPage(),
+              //             //               ),
+              //             //             );
+              //             //           })
+              //             //     ],
+              //             //   ),
+              // );
+            }
+          } on FirebaseException catch (e) {
+            debugPrint("error is ${e.message}");
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text("Alert dialogue box"),
+                content: const Text(
+                    "Invalid email or password .Please enter the correct login details or Register"),
+                actions: <Widget>[
+                  TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const LoginPage()),
+                        );
+                      },
+                      child: const Text("OK"))
+                ],
+              ),
+            );
+          }
+          // Navigator.push(
+          //   //for redirection
+          //   context,
+          //   MaterialPageRoute(
+          //     builder: ((context) => const myCustomScreen()),
+          //   ),
+          // );
+        },
         child: Text(
           "Login",
           textAlign: TextAlign.center,
